@@ -1,5 +1,5 @@
-#include <iostream>
 #include <cmath>
+#include <iostream>
 using namespace std;
 struct Coordinate {
     int x;
@@ -17,10 +17,12 @@ double manhattanDistance(Coordinate *p1, Coordinate *p2)
     return res;
 }
 
+// ²âÊÔÓÃÀı
 int main()
 {
-    Coordinate *p1 = new Coordinate{1,3};
-    Coordinate *p2 = new Coordinate{-2,6};
-    cout<<distance(p1,p2)<<endl<<manhattanDistance(p1,p2)<<endl;
+    Coordinate *p1 = new Coordinate{1, 3};
+    Coordinate *p2 = new Coordinate{-2, 6};
+    cout << distance(p1, p2) << endl
+         << manhattanDistance(p1, p2) << endl;
     return 0;
 }
