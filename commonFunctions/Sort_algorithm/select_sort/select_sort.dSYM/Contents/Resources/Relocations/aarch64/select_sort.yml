@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/yyz/Documents/my_code/C_Code/my_cpp_code/commonFunctions/Sort_algorithm/select_sort/select_sort'
+relocations:     []
+...
