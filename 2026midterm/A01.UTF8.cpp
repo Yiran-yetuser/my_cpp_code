@@ -240,7 +240,7 @@ int main()
         }
     }
 
-    string filename = "C:/color_image.bmp";
+    string filename = "color_image.bmp";
     drawBitmap(filename.c_str(), img, SIZE, SIZE);
 
     string cmd = "start \"\" \"" + filename + "\"";
