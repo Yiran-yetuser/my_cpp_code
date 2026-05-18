@@ -2,8 +2,8 @@
 using namespace std;
 struct Node {
     int x;
-    Node *next;
-    Node(int val = 0, Node *next = nullptr) : x(val), next(next) {}
+    Node *link;
+    Node(int val = 0, Node *next = nullptr) : x(val), link(next) {}
 };
 Node *create_c(int n)
 {
@@ -19,13 +19,13 @@ Node *create_c(int n)
         cur = new Node(n - i - 1, tail);
         tail = cur;
     }
-    head->next = cur;
+    head->link = cur;
     return head;
 }
 void del_c(Node &h, int m)
 {
     Node *cur = &h;
-    while (cur->next != nullptr && cur->next != cur) {
+    while (cur->link != nullptr && cur->link != cur) {
         Node *pre;
         for (int i = 1; i <= m; i++) {
             if (i == m - 1) {
@@ -33,15 +33,15 @@ void del_c(Node &h, int m)
             }
             if (i == m) {
                 cout << cur->x << endl;
-                pre->next = cur->next;
-                cur->next = nullptr;
-                cur = pre->next;
+                pre->link = cur->link;
+                cur->link = nullptr;
+                cur = pre->link;
                 break;
             }
-            cur = cur->next;
+            cur = cur->link;
         }
     }
-    cur->next = nullptr;
+    cur->link = nullptr;
     h = *cur;
 }
 
