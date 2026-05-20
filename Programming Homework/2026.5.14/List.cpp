@@ -68,7 +68,7 @@ List::List()
 List::~List()
 {
     MakeEmpty();
-    delete[] head;
+    delete head;
 }
 
 void List::MakeEmpty()
@@ -85,27 +85,25 @@ void List::MakeEmpty()
 
 int List::Find(int data)
 {
-    int idx = 0;
+    int idx = 1;
     Node *tempP = head->link;
-    while (tempP->link != nullptr && tempP->info != data) {
+    // 防止跳过尾节点和空链表崩溃
+    while (tempP != nullptr && tempP->info != data) {
         tempP = tempP->link;
         idx++;
     }
-    if (tempP == nullptr) {
-        return -1;
-    }
-    return idx;
+    return (tempP == nullptr) ? -1 : idx;
 }
 
 int List::Length()
 {
-    int idx = 0;
+    int len = 0;
     Node *tempP = head->link;
-    while (tempP->link != nullptr) {
+    while (tempP != nullptr) {
         tempP = tempP->link;
-        idx++;
+        len++;
     }
-    return idx;
+    return len;
 }
 
 void List::PrintList()
@@ -154,37 +152,72 @@ void List::InsertOrder(int data)
 
 void List::DeleteNode(int index)
 {
+    if (index < 1)
+        return; // 非法索引直接返回
     Node *tempP = head;
     int counter = index - 1;
-    while (tempP->link != NULL && counter >= 0) {
+
+    // 确保 tempP 停在待删节点的前驱
+    while (tempP->link != nullptr && counter > 0) {
         tempP = tempP->link;
         counter--;
     }
+
+    if (tempP->link == nullptr)
+        return; // 索引超出链表长度，安全退出
+
     if (tempP->link == tail)
-        tail = tempP;
-    if (tempP->link != NULL) {
-        Node *p = tempP->RemoveAfter();
-        delete p;
-    }
+        tail = tempP; // 更新尾指针
+    Node *p = tempP->RemoveAfter();
+    delete p;
 }
 
 int main()
 {
+    cout << "Input list: " << endl;
     List forwardList{};
     List backwardList{};
+    int arr[16] = {0};
     for (int i = 0; i < 16; i++) {
         int n;
         if (!(cin >> n))
             break;
+        arr[i] = n;
         forwardList.InsertFront(n);
         backwardList.InsertRear(n);
     }
 
+    cout << "The forward list: ";
     forwardList.PrintList();
+    cout << "The backward list: ";
     backwardList.PrintList();
 
+    cout << "Input the number to delete: ";
     int target;
     cin >> target;
 
+    int idx1 = forwardList.Find(target);
+    int idx2 = backwardList.Find(target);
+    if (idx1 == -1) {
+        cout << "This number does not exist in the list." << endl;
+    } else {
+        // 先找位置，再按位置删除
+        forwardList.DeleteNode(idx1);
+        backwardList.DeleteNode(idx2);
+
+        cout << "The forward list after deleting " << target << " : ";
+        forwardList.PrintList();
+        cout << "The backward list after deleting " << target << " : ";
+        backwardList.PrintList();
+    }
+
+    forwardList.MakeEmpty();
+    backwardList.MakeEmpty();
+    for (int i = 0; i < 16; i++) {
+        forwardList.InsertOrder(arr[i]);
+    }
+
+    cout << "The Ascending order list: ";
+    forwardList.PrintList();
     return 0;
 }
