@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cmath> // 可选，仅为容差优化时使用
 #include <iostream>
 
@@ -176,16 +177,27 @@ public:
         return *this;
     }
 
-    T &operator[](int idx) const
+    T &operator[](int idx)
     {
+        assert(idx >= 0 && idx < size);
+        return data[idx];
+    }
+    const T &operator[](int idx) const
+    {
+        assert(idx >= 0 && idx < size);
         return data[idx];
     }
 
     friend std::ostream &operator<<(std::ostream &os, const Sorter &s)
     {
+        os << "[";
         for (int i = 0; i < s.size; i++) {
-            os << s.data[i] << " ";
+            os << s.data[i];
+            if (i < s.size - 1) {
+                os << ", ";
+            }
         }
+        os << "]";
         return os;
     }
 
@@ -241,7 +253,10 @@ int descendingInt(const int &a, const int &b)
 //    如果返回引用会有什么风险？
 //
 // 回答（请在此处填写）：
-
+// 回答：
+// 1. 非const版用于读写，const版用于只读。只提供非const版，const对象或引用无法调用，限制了const场景下的访问。
+// 2. 静态成员可访问私有成员num/den，无需友元，封装性更好；不依赖特定对象，逻辑独立。
+// 3. 运算符产生新结果，不能返回局部对象的引用（悬垂）；返回值语义安全，符合值语义预期。
 // ==================== 分数类 Fraction 框架 ====================
 class Fraction
 {
@@ -274,6 +289,9 @@ public:
     {
         // TODO: 初始化 num, den，调用 reduce()
         num = n;
+        if (d == 0) {
+            d = 1;
+        }
         den = d;
         reduce();
     }
@@ -409,3 +427,11 @@ int main()
 //   实现情况: 已做且已在代码注释中说明
 //
 // （学生自行填写）
+
+// - 优化点名称: 快速排序
+//   档次: 重大(8分)
+//   实现情况: 已做且已在代码注释中说明
+
+// - 优化点名称: 下标越界检查
+//   档次: 简单(3分)
+//   实现情况: 已做且已在 operator[] 中加入 assert
