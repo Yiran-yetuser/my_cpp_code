@@ -11,17 +11,68 @@
 //    请给出一种设计方案（不需要写代码，描述思路即可）。
 //
 // 回答（请在此处填写）：
+// 1. 实现多态，可以根据对象的实际类型调用对应的排序算法，增强灵活性和可扩展性。
+// 2. 派生类需要定义自己的拷贝构造函数和赋值运算符，调用基类的对应函数来处理基类成员，并处理新增成员的拷贝/赋值逻辑。
+// 3. 可以在主函数或工厂函数中根据数据规模创建不同的 Sorter 派生类对象（如 BubbleSorter、InsertionSorter、QuickSorter），
+// 并通过基类指针调用 sort 方法实现自动选择排序算法。
 
 // ==================== 第一部分：修改后的 Sorter<T> 抽象基类 ================
 // 请将你第二弹中完成的 Sorter<T> 和完整代码复制到此处，并做以下修改：
 //   1. 将 sort 方法声明改为纯虚函数
 //   2. 移除原有的 sort 函数实现（函数体）。
-//   3. 在 protected 区域添加方法：T* getDataPtr() const { return data; } 和 i nt getSize() const { return size; }
+//   3. 在 protected 区域添加方法：T* getDataPtr() const { return data; } 和 int getSize() const { return size; }
 //   4. 保留所有其他成员（data, size, owned, 构造/析构/拷贝/赋值/下标/输出）。
 // 注意：不要重复定义全局比较函数（CompareInt, CompareDouble, defaultCompare 等），它们已经在第一弹中定义过。
 
 // 此处复制你的 Sorter<T> 代码（略）
 // ------------------- Sorter 类 -------------------
+
+// ------------------- 全局比较函数 -------------------
+int CompareInt(const int &a, const int &b)
+{
+    // TODO: 返回 -1/0/1 表示 a<b, a==b, a>b
+    if (a < b) {
+        return -1;
+    }
+    if (a > b) {
+        return 1;
+    }
+    return 0;
+}
+
+int CompareDouble(const double &a, const double &b)
+{
+    // TODO: 返回 -1/0/1，直接使用 <, >, == 即可
+    if (a < b) {
+        return -1;
+    }
+    if (a > b) {
+        return 1;
+    }
+    return 0;
+}
+
+// ------------------- 默认比较器模板 -------------------
+template <typename T>
+int defaultCompare(const T &a, const T &b)
+{
+    // TODO: 使用 < 和 > 实现三态比较
+    if (a < b) {
+        return -1;
+    }
+    if (a > b) {
+        return 1;
+    }
+    return 0;
+}
+
+// double 特化版本（可直接调用 CompareDouble）
+template <>
+int defaultCompare<double>(const double &a, const double &b)
+{
+    // TODO: 调用 CompareDouble
+    return CompareDouble(a, b);
+}
 template <typename T>
 class Sorter
 {
@@ -37,31 +88,9 @@ private:
         std::swap(owned, other.owned);
     }
 
-    // // 私有快速排序函数
-    // void quickSort(int low, int high, int (*cmp)(const T &, const T &))
-    // {
-    //     if (low >= high) {
-    //         return;
-    //     }
-
-    //     T pivot = data[high];
-    //     int i = low - 1;
-    //     for (int j = low; j < high; ++j) {
-    //         if (cmp(data[j], pivot) < 0) {
-    //             i++;
-    //             T tmp = data[i];
-    //             data[i] = data[j];
-    //             data[j] = tmp;
-    //         }
-    //     }
-    //     T tmp = data[i + 1];
-    //     data[i + 1] = data[high];
-    //     data[high] = tmp;
-
-    //     int pi = i + 1;
-    //     quickSort(low, pi - 1, cmp);
-    //     quickSort(pi + 1, high, cmp);
-    // }
+protected:
+    T *getDataPtr() const { return data; }
+    int getSize() const { return size; }
 
 public:
     // 构造函数
@@ -95,7 +124,7 @@ public:
     }
 
     // 析构函数
-    ~Sorter()
+    virtual ~Sorter() // 将析构函数设为虚函数，防止派生类对象通过基类指针删除时发生资源泄漏
     {
         // TODO: 释放内存（如果 owned）
         // 优化点：释放后将 data 置为 NULL
@@ -154,6 +183,7 @@ public:
         assert(idx >= 0 && idx < size);
         return data[idx];
     }
+
     const T &operator[](int idx) const
     {
         assert(idx >= 0 && idx < size);
@@ -175,10 +205,6 @@ public:
 
     // 排序方法
     virtual void sort(int (*cmp)(const T &, const T &) = 0) = 0;
-
-    // 访问器
-    T *getDataPtr() const { return data; }
-    int getSize() const { return size; }
 };
 
 // 请将你第二弹中完成的Fraction类和完整代码复制到此处
@@ -279,11 +305,29 @@ public:
         os << f.num << "/" << f.den;
         return os;
     }
-
+    friend bool operator<(const Fraction &a, const Fraction &b)
+    {
+        return Fraction::compare(a, b) < 0;
+    }
+    friend bool operator>(const Fraction &a, const Fraction &b)
+    {
+        return Fraction::compare(a, b) > 0;
+    }
     // 可选：获取分子/分母（用于自定义比较器，可根据需要添加）
     int getNum() const { return num; }
     int getDen() const { return den; }
 };
+template <>
+int defaultCompare<Fraction>(const Fraction &a, const Fraction &b)
+{
+    return Fraction::compare(a, b);
+}
+// 4. 自定义比较器：按分子大小升序
+int compareByNumerator(const Fraction &a, const Fraction &b)
+{
+    // TODO: 返回 -1/0/1，比较 a.getNum() 与 b.getNum()
+    return CompareInt(a.getNum(), b.getNum());
+}
 
 // ==================== 第二部分：派生类实现不同的排序算法 ===================
 // 每个派生类必须：
@@ -330,27 +374,66 @@ class InsertionSorter : public Sorter<T>
 public:
     InsertionSorter(T *externalArr, int len, bool copyData = false)
         : Sorter<T>(externalArr, len, copyData) {}
-    virtual void sort(int (*cmp)(const T &, const T &) = 0)
+    virtual void sort(int (*cmp)(const T &, const T &) = 0) override
     {
-        // TODO: 实现插入排序
         if (this->getSize() <= 0)
             return;
         auto comparator = cmp ? cmp : defaultCompare<T>;
         for (int i = 1; i < this->getSize(); i++) {
-            for (int j = i - 1; j >= 0; j--) {
-                if (comparator(this->getDataPtr()[j], this->getDataPtr()[i]) > 0) {
-                    T temp = this->getDataPtr()[i];
-                    for (int idx = i - 1; idx >= j + 1; idx--) {
-                        this->getDataPtr()[idx] = this->getDataPtr()[idx - 1];
-                    }
-                    this->getDataPtr()[j] = temp;
-                }
+            T key = this->getDataPtr()[i];
+            int j = i - 1;
+            while (j >= 0 && comparator(key, this->getDataPtr()[j]) < 0) {
+                this->getDataPtr()[j + 1] = this->getDataPtr()[j];
+                j--;
             }
+            this->getDataPtr()[j + 1] = key;
         }
     }
 };
 
 // 如果你实现更多排序器（如选择排序、快速排序、归并排序、希尔排序等等），可以继续添加，并作为优化。
+
+// 快速排序器（O(n log n)） - 作为重大优化
+template <typename T>
+class QuickSorter : public Sorter<T>
+{
+private:
+    void quickSort(int low, int high, int (*cmp)(const T &, const T &))
+    {
+        if (low >= high) {
+            return;
+        }
+
+        T pivot = this->getDataPtr()[high];
+        int i = low - 1;
+        for (int j = low; j < high; ++j) {
+            if (cmp(this->getDataPtr()[j], pivot) < 0) {
+                i++;
+                T tmp = this->getDataPtr()[i];
+                this->getDataPtr()[i] = this->getDataPtr()[j];
+                this->getDataPtr()[j] = tmp;
+            }
+        }
+        T tmp = this->getDataPtr()[i + 1];
+        this->getDataPtr()[i + 1] = this->getDataPtr()[high];
+        this->getDataPtr()[high] = tmp;
+
+        int pi = i + 1;
+        quickSort(low, pi - 1, cmp);
+        quickSort(pi + 1, high, cmp);
+    }
+
+public:
+    QuickSorter(T *externalArr, int len, bool copyData = false)
+        : Sorter<T>(externalArr, len, copyData) {}
+    virtual void sort(int (*cmp)(const T &, const T &) = 0) override
+    {
+        if (this->getSize() <= 0)
+            return;
+        auto comparator = cmp ? cmp : defaultCompare<T>;
+        quickSort(0, this->getSize() - 1, comparator);
+    }
+};
 
 // ==================== 第三部分：主函数测试 ====================
 int main()
@@ -359,7 +442,7 @@ int main()
     int intArr[] = {5, 2, 8, 1, 9, 3};
     int lenInt = sizeof(intArr) / sizeof(intArr[0]);
     // 假设 Fraction 类已在第二弹中定义，此处可以直接使用
-    Fraction fracArr[] = {Fraction(1, 2), Fraction(3, 4), Fraction(1, 3), Fract ion(2, 1)};
+    Fraction fracArr[] = {Fraction(1, 2), Fraction(3, 4), Fraction(1, 3), Fraction(2, 1)};
     int lenFrac = sizeof(fracArr) / sizeof(fracArr[0]);
 
     // 1. 使用 BubbleSorter 对 int 数组排序（引用模式）
@@ -371,8 +454,16 @@ int main()
     // 2. 使用 InsertionSorter 对 Fraction 数组排序（拷贝模式，不修改原数组）
     InsertionSorter<Fraction> insertionSorter(fracArr, lenFrac, true);
     std::cout << "\n插入排序前: " << insertionSorter << std::endl;
-    insertionSorter.sort(); // 使用默认比较器（Fraction::compare）     std::cout << "插入排序后（按值）: " << insertionSorter << std::endl;
-
+    insertionSorter.sort(); // 使用默认比较器（Fraction::compare）
+    std::cout << "插入排序后（按值）: " << insertionSorter << std::endl;
+    std::cout << "原 Fraction 数组未修改: [";
+    for (int i = 0; i < lenFrac; i++) {
+        std::cout << fracArr[i];
+        if (i < lenFrac - 1) {
+            std::cout << ", ";
+        }
+    }
+    std::cout << "]" << std::endl;
     // 3. 多态演示：基类指针指向派生类对象
     Sorter<int> *sorter = new BubbleSorter<int>(intArr, lenInt, false);
     std::cout << "\n多态调用冒泡排序: " << *sorter << std::endl;
@@ -382,6 +473,16 @@ int main()
 
     // 4. 如果你实现了第三种排序算法，可以在这里测试
     // ...      return 0;
+
+    // 测试快速排序
+    QuickSorter<Fraction> quickSorter(fracArr, lenFrac, true);
+    std::cout << "\n快速排序前: " << quickSorter << std::endl;
+    quickSorter.sort(); // 使用默认比较器（Fraction::compare）
+    std::cout << "\n快速排序后（按值）: " << quickSorter << std::endl;
+
+    QuickSorter<Fraction> numSorter(fracArr, lenFrac, true);
+    numSorter.sort(compareByNumerator);
+    std::cout << "按分子排序: " << numSorter << std::endl;
 }
 
 // ==================== 优化说明区 ====================
@@ -391,3 +492,7 @@ int main()
 //   实现情况: 已做且已在代码注释中说明
 //
 // （学生自行填写）
+// 1. 实现了快速排序算法，作为冒泡和插入排序的重大优化（8分）
+// 2. 在 Sorter 类中使用了拷贝交换惯用法实现赋值运算符，简化代码并提高异常安全性（5分）
+// 3. 在构造函数中处理了 len <= 0 的情况，避免不必要的内存分配（3分）
+// 4. 在析构函数中释放内存后将指针置为 nullptr，防止悬空指针（3分）
